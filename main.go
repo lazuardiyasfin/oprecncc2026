@@ -156,8 +156,55 @@ func fileDownloadHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, filepath)
 }
 
+func removeExpiredFiles() {
+	now := time.Now()
+
+	rows, err := db.QueryContext(
+		context.Background(),
+		`SELECT id, extension FROM files WHERE expires_at <= ?`, now,
+	)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var id, ext string
+		if err := rows.Scan(&id, &ext); err != nil {
+			continue
+		}
+
+		path := filepath.Join("uploads", id + ext)
+		if err := os.Remove(path); err != nil {
+			log.Println(err)
+		} else {
+			log.Printf("Deleted expired file: %s", path)
+		}
+	}
+
+	_, err = db.ExecContext(
+		context.Background(),
+		`DELETE FROM files WHERE expires_at <= ?`, now,
+	)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+}
+
 func main() {
 	initDatabase("app.db")
+	defer db.Close()
+
+	go func(){
+		ticker := time.NewTicker(1 * time.Hour)
+		defer ticker.Stop()
+
+		for range ticker.C {
+			removeExpiredFiles()
+		}
+	}()
 
 	http.HandleFunc("/health", healthHandler)
 	http.HandleFunc("/upload", fileUploadHandler)
