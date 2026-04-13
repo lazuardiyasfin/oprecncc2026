@@ -2,10 +2,12 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 )
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
@@ -49,12 +51,28 @@ func fileUploadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Write([]byte("File successfully uploaded"))
+	w.Write([]byte("localhost:8080/d/" + filename))
+}
+
+func fileDownloadHandler(w http.ResponseWriter, r *http.Request) {
+	filename := r.URL.Path[len("/d/"):]
+	if filename == "" {
+		http.Error(w, "Missing filename", http.StatusBadRequest)
+		return
+	}
+
+	contentDisposition := fmt.Sprintf("attachment; filename=\"%s\"", filename)
+	w.Header().Set("Content-Disposition", contentDisposition)
+
+	filepath := filepath.Join("uploads", filename)
+	http.ServeFile(w, r, filepath)
 }
 
 func main() {
 	http.HandleFunc("/health", healthHandler)
 	http.HandleFunc("/upload", fileUploadHandler)
+	http.HandleFunc("/d/", fileDownloadHandler)
+
 	log.Println("Starting server on :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
