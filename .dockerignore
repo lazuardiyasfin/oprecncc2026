@@ -1,5 +1,9 @@
-app.db
+*.db
 uploads/
 .git
 .gitignore
 *.md
+.env
+.env.example
+Dockerfile*
+.dockerignore
