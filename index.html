@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Temp File Sharing</title>
+</head>
+<body>
+    <form action="/upload" method="post" enctype="multipart/form-data">
+        <label for="file-upload">Select file:</label>
+        <input type="file" id="file-upload" name="file" aria-describedby="file-help" required/>
+        <div id="file-help" class="form-text">Max. file size 50MB. File will be deleted after 24 hours.</div>
+        <button type="submit">Upload File</button>
+    </form>
+    <script>
+        const uploadField = document.getElementById("file-upload");
+        uploadField.onchange = function() {
+            if(this.files[0].size > 50 * 1024 * 1024) {
+                alert("File is too big! (Max. 50MB)");
+                this.value = "";
+            }
+        };
+    </script>
+</body>
+</html>

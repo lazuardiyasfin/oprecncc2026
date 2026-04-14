@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -15,7 +16,7 @@ import (
 	"path/filepath"
 	"syscall"
 	"time"
-	"errors"
+	"html/template"
 	_ "modernc.org/sqlite"
 )
 
@@ -78,6 +79,11 @@ func fileUploadHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := r.ParseMultipartForm(10 << 20)
 	if err != nil {
+		var maxBytesErr *http.MaxBytesError
+		if errors.As(err, &maxBytesErr) {
+			w.WriteHeader(http.StatusRequestEntityTooLarge)
+			return
+		}
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -122,9 +128,27 @@ func fileUploadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "plain/text")
-	message := fmt.Sprintf("File successfully uploaded!\nDownload link: http://localhost:8080/d/%s\n", id)
-	w.Write([]byte(message))
+	t, err := template.ParseFiles("template.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	downloadUrl := fmt.Sprintf("http://localhost:8080/d/%s", id)
+
+	data := struct {
+		FileName string
+		FileID string
+		DownloadURL string
+	}{
+		FileName: filename,
+		FileID: id,
+		DownloadURL: downloadUrl,
+	}
+	
+	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusCreated)
+	t.Execute(w, data)
 }
 
 func fileDownloadHandler(w http.ResponseWriter, r *http.Request) {
@@ -213,6 +237,14 @@ func main() {
 		}
 	}()
 	
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request){
+		if r.URL.Path != "/" {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		http.ServeFile(w, r, "index.html")
+	})
+
 	http.HandleFunc("/health", healthHandler)
 	http.HandleFunc("/upload", fileUploadHandler)
 	http.HandleFunc("/d/", fileDownloadHandler)
