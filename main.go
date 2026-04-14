@@ -11,8 +11,11 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
+	"syscall"
 	"time"
+	"errors"
 	_ "modernc.org/sqlite"
 )
 
@@ -197,6 +200,10 @@ func main() {
 	initDatabase("app.db")
 	defer db.Close()
 
+	server := &http.Server{
+		Addr: ":8080",
+	}
+
 	go func(){
 		ticker := time.NewTicker(1 * time.Hour)
 		defer ticker.Stop()
@@ -205,11 +212,34 @@ func main() {
 			removeExpiredFiles()
 		}
 	}()
-
+	
 	http.HandleFunc("/health", healthHandler)
 	http.HandleFunc("/upload", fileUploadHandler)
 	http.HandleFunc("/d/", fileDownloadHandler)
 
-	log.Println("Starting server on :8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	shutdownChan := make(chan bool, 1)
+
+	go func(){
+		log.Println("Starting server on :8080.")
+		if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
+			log.Fatal(err)
+		}
+
+		shutdownChan <- true
+		log.Println("Stopped serving new connections.")
+	}()
+
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	<-sigChan
+
+	shutdownCtx, shutdownRelease := context.WithTimeout(context.Background(), 10*time.Second)
+	defer shutdownRelease()
+
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		log.Fatal(err)
+	}
+
+	<-shutdownChan
+	log.Println("Graceful shutdown complete.")
 }
