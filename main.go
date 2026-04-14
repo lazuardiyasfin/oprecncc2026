@@ -20,7 +20,11 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-var db *sql.DB
+var (
+	db 			*sql.DB
+	uploadDir	string
+	appURL		string
+)
 
 func initDatabase(path string) error {
 	var err error
@@ -113,7 +117,7 @@ func fileUploadHandler(w http.ResponseWriter, r *http.Request) {
 		`INSERT INTO files (id, name, extension, expires_at) VALUES (?, ?, ?, ?)`, id, name, ext, expiredAt,
 	)
 
-	path := filepath.Join("uploads", id + ext)
+	path := filepath.Join(uploadDir, id + ext)
 	
 	targetFile, err := os.Create(path)
 	if err != nil {
@@ -134,7 +138,7 @@ func fileUploadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	downloadUrl := fmt.Sprintf("http://localhost:8080/d/%s", id)
+	downloadUrl := fmt.Sprintf("%s/d/%s", appURL, id)
 
 	data := struct {
 		FileName string
@@ -179,7 +183,7 @@ func fileDownloadHandler(w http.ResponseWriter, r *http.Request) {
 	contentDisposition := fmt.Sprintf("attachment; filename=\"%s\"", filename)
 	w.Header().Set("Content-Disposition", contentDisposition)
 
-	filepath := filepath.Join("uploads", id + ext)
+	filepath := filepath.Join(uploadDir, id + ext)
 	http.ServeFile(w, r, filepath)
 }
 
@@ -202,7 +206,7 @@ func removeExpiredFiles() {
 			continue
 		}
 
-		path := filepath.Join("uploads", id + ext)
+		path := filepath.Join(uploadDir, id + ext)
 		if err := os.Remove(path); err != nil {
 			log.Println(err)
 		} else {
@@ -221,12 +225,21 @@ func removeExpiredFiles() {
 }
 
 func main() {
-	initDatabase("app.db")
+	dbPath := os.Getenv("DB_PATH")
+	initDatabase(dbPath)
 	defer db.Close()
 
-	server := &http.Server{
-		Addr: ":8080",
+	addr := ":8080"
+	port := os.Getenv("APP_PORT")
+	if port == "" {
+		addr = ":8080"
 	}
+	server := &http.Server{
+		Addr: addr,
+	}
+
+	appURL = os.Getenv("APP_URL")
+	uploadDir = os.Getenv("UPLOAD_DIR")
 
 	go func(){
 		ticker := time.NewTicker(1 * time.Hour)

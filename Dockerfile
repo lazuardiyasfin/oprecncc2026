@@ -31,9 +31,8 @@ FROM alpine:3.23
 WORKDIR /app
 
 # Create non-root user for only running the application
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-
-RUN mkdir uploads
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup && \
+    mkdir -p /app/data/uploads
 
 COPY --from=builder /app/index.html .
 COPY --from=builder /app/template.html .
