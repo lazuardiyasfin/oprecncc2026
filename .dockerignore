@@ -1,0 +1,5 @@
+app.db
+uploads/
+.git
+.gitignore
+*.md
