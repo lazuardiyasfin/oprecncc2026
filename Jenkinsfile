@@ -11,12 +11,15 @@ pipeline {
             agent {
                 docker {
                     image 'golang:1.26.2-alpine3.23'
+                    args '-v /home/jenkins/go-cache/pkg:/go/mod/pkg ' +
+                        '-v /home/jenkins/go-cache/build:/.cache/go-build'
                     reuseNode true
                 }
             }
             steps {
                 sh '''
-                    export GOCACHE=${WORKSPACE}/.cache/go-build
+                    export GOMODCACHE=/go/mod/pkg
+                    export GOCACHE=/.cache/go-build
 
                     go mod download
 
@@ -28,13 +31,15 @@ pipeline {
             agent {
                 docker {
                     image 'golang:1.26.2-alpine3.23'
+                    args '-v /home/jenkins/go-cache/pkg:/go/mod/pkg ' +
+                        '-v /home/jenkins/go-cache/build:/.cache/go-build'
                     reuseNode true
                 }
             }
             steps {
                 sh '''
-                    export GOCACHE=${WORKSPACE}/.cache/go-build
-                    
+                    export GOCACHE=/.cache/go-build
+
                     go test -v -coverprofile=coverage.out ./...
                 '''
             }
