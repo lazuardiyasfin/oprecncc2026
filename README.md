@@ -39,7 +39,7 @@ Agar SonarQube Scanner CLI dapat mengirimkkan hasil analisis ke SonarQube Server
 
 - Konfigurasi Webhook GitHub ke Jenkins:
 
-    ![](images/webhook-github.png.png)
+    ![](images/webhook-github.png)
 
 - Konfigurasi Instalasi SonarQube Server di Jenkins:
 
