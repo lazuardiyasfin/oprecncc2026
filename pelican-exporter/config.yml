@@ -1,0 +1,7 @@
+host: # isi FQDN
+host_port: 
+port: 9531 
+api_key: # client API key dengan permission backup->read
+https: true
+ignore_ssl: false
+server_list_type: ''

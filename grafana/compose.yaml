@@ -1,0 +1,13 @@
+services:
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - 3000:3000
+    restart: unless-stopped
+    environment:
+      - GF_SERVER_ROOT_URL=http://ec2-grafana.goldeye-cardassian.ts.net:3000/
+    volumes:
+      - grafana-storage:/var/lib/grafana
+volumes:
+  grafana-storage:

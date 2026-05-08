@@ -1,0 +1,34 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+
+scrape_configs:
+- job_name: "ec2-prometheus"
+  static_configs:
+    - targets: ["ec2-prometheus:9100"]
+
+- job_name: "ec2-grafana"
+  static_configs:
+    - targets: ["ec2-grafana:9100"]
+
+- job_name: "bebop"
+  static_configs:
+    - targets: ["bebop:9100"]
+
+- job_name: "ts-proxy"
+  static_configs:
+    - targets: ["proxy-vm:5252"]
+
+- job_name: "proxy-vm"
+  static_configs:
+    - targets: ["proxy-vm:9100"]
+
+- job_name: "pelican"
+  static_configs:
+    - targets: ["bebop:9531"]
+
+- job_name: "minecraft_server"
+  static_configs:
+    - targets: ["bebop:9940"]

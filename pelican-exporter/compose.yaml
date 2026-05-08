@@ -1,0 +1,10 @@
+services:
+  pterodactyl-exporter:
+    image: loens2/pterodactyl_exporter:latest
+    container_name: pterodactyl-exporter
+    ports:
+      - "<TAILSCALE IP HOST>:9531:9531"
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./config.yml:/opt/pterodactyl_exporter/config/config.yml
