@@ -84,6 +84,18 @@ Sesuai dengan permintaan penugasan, dashboard berikut dibuat secara custom, dise
 
 ![dashboard details](images/dashboard-details.png)
 
+### Sistem Alert
+
+Sistem monitoring yang dibuat juga menyediakan Grafana alerting sederhana terhadap webhook Discord. Metrics alerting yang digunakan adalah query `up == 0`, yakni health check terhadap setiap host yang di-scrape oleh Prometheus. Apabila target tidak dapat dijangkau, maka nilai `up == 0` menjadi `true` sehingga menyebabkan transisi status dari "normal" ke "firing". Apabila status "firing" terjadi, Grafana langsung mengirimkan payload alert ke webhook Discord. 
+
+Berikut adalah beberapa screenshot terkait sistem alerting yang sudah dibuat:
+- Tampilan halaman alert rules untuk alert "Server Health":
+  ![alert rule](images/alert-rule.png)
+- Firing alert yang berhasil terkirim melalui webhook Discord:
+  ![firing alert](images/firing-alert.png)
+- Resolved alert apabila status kembali normal:
+  ![resolved alert](images/resolved-alert.png)
+
 ### Alur Monitoring
 
 Berikut adalah alur monitoring singkat berdasarkan sistem yang telah dibuat secara bertahap:
